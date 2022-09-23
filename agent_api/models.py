@@ -45,7 +45,7 @@ class AgentProfile(AbstractBaseUser, PermissionsMixin):
     email = models.EmailField(_('email address'), unique=True)
     first_name = models.CharField(max_length=50, null=True, blank=True)
     last_name = models.CharField(max_length=50, null=True, blank=True)
-    image = models.ImageField(null=True, blank=True
+    image = models.ImageField(null=True, blank=True,
                               upload_to=model_helpers.upload_to)
     
     business_name = models.CharField(max_length=150, null=True, blank=True)
