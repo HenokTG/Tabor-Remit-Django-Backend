@@ -1,7 +1,9 @@
 import os
+import environ
 from pathlib import Path
 
-import environ
+import django_heroku
+
 # Initialise environment variables
 env = environ.Env()
 environ.Env.read_env()
@@ -10,10 +12,11 @@ environ.Env.read_env()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
+# SECRET_KEY = os.getenv('SECRET_KEY')
 SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env('DEBUG')
 
 # NGROK is used exposes local server port [8000] to the Internet to recieve paypal webhook response
 ALLOWED_HOSTS = ["f2e4-196-191-60-93.eu.ngrok.io", "127.0.0.1"]
@@ -41,6 +44,7 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -77,8 +81,8 @@ DATABASES = {
         'NAME': env('DATABASE_NAME'),
         'USER': env('DATABASE_USER'),
         'PASSWORD': env('DATABASE_PASS'),
-        'HOST': '127.0.0.1',
-        'PORT': '5432',
+        'HOST': env('DATABASE_HOST'),
+        'PORT': env('DATABASE_PORT'),
     }
 }
 
@@ -108,9 +112,13 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
-STATIC_URL = 'static/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+# Enable WhiteNoise's GZip compression of static assets.
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 # Agent profile Image upload location helper function
 UPLOAD_TO_OPTIONS = {
@@ -136,3 +144,6 @@ REST_FRAMEWORK = {
 PAYPAL_CLIENT_ID = env("PAYPAL_CLIENT_ID")
 PAYPAL_CLIENT_SECRET = env("PAYPAL_CLIENT_SECRET")
 PAYPAL_WEBHOOK_ID = env("PAYPAL_WEBHOOK_ID")
+
+# Configure Django App for Heroku.
+django_heroku.settings(locals())
