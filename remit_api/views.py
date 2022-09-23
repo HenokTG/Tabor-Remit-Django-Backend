@@ -195,12 +195,13 @@ def process_card_purchase(event_detail):
         if Transaction_detail.transaction_amount == float(order_amount):
             print("Payment Verified. Continue card purchase.")
             
-            Transaction_detail.transaction_status = "APPROVED"
-            Transaction_detail.save()
-            
             phone_number = Transaction_detail.invoice.receiver_phone
             airtime_amount = Transaction_detail.airtime_amount
             service_provider = Transaction_detail.invoice.operator.operator_name
+            
+            Transaction_detail.transaction_status = "APPROVED"
+            Transaction_detail.save(update_fields=['transaction_status'])
+
             data = {'phone': phone_number,
                     'value': airtime_amount,
                     }  # This may not be the actual key-value pair
