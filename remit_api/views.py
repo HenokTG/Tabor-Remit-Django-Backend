@@ -187,48 +187,58 @@ def process_card_purchase(event_detail):
     order_amount = event_detail["purchase_units"][0]["amount"]["value"]
     customer_name = event_detail["payer"]["name"]["given_name"]
     customer_email = event_detail["payer"]["email_address"]
-    Transaction_detail = Transactions.objects.get(
-        transaction_id=order_id)
+    
+    try:
+        Transaction_detail = Transactions.objects.get(
+            transaction_id=order_id)    
 
-    if Transaction_detail.transaction_amount == float(order_amount):
-        print("Payment Verified. Continue card purchase.")
-        
-        phone_number = Transaction_detail.invoice.receiver_phone
-        airtime_amount = Transaction_detail.airtime_amount
-        service_provider = Transaction_detail.invoice.operator.operator_name
-        data = {'phone': phone_number,
-                'value': airtime_amount,
-                }  # This may not be the actual key-value pair
-        API_ENDPOINT = 'https://httpbin.org/post'  # Card purchase API
+        if Transaction_detail.transaction_amount == float(order_amount):
+            print("Payment Verified. Continue card purchase.")
+            
+            Transaction_detail.transaction_status = "APPROVED"
+            Transaction_detail.save()
+            
+            phone_number = Transaction_detail.invoice.receiver_phone
+            airtime_amount = Transaction_detail.airtime_amount
+            service_provider = Transaction_detail.invoice.operator.operator_name
+            data = {'phone': phone_number,
+                    'value': airtime_amount,
+                    }  # This may not be the actual key-value pair
+            API_ENDPOINT = 'https://httpbin.org/post'  # Card purchase API
 
-        try:
-            response = requests.post(url=API_ENDPOINT, data=data)
-            response.raise_for_status()
+            try:
+                response = requests.post(url=API_ENDPOINT, data=data)
+                response.raise_for_status()
 
-            email_data = {"subject":  "[From Tabor Remit] Card Purchase processed Sucessfully.",
-                          "message": f"Hi, {customer_name}. Thank you for sending love to Ethiopia. Your card purchase \
-                                order of {airtime_amount} ETB to {service_provider} \
-                                customer number +251{phone_number} is completed successfully.",
-                          "from_email": "our@email.com",
-                          "recipient": customer_email}
+                email_data = {"subject":  "[From Tabor Remit] Card Purchase processed Sucessfully.",
+                            "message": f"Hi, {customer_name}. Thank you for sending love to Ethiopia. Your card purchase \
+                                    order of {airtime_amount} ETB to {service_provider} \
+                                    customer number +251{phone_number} is completed successfully.",
+                            "from_email": "our@email.com",
+                            "recipient": customer_email}
 
-            send_confirmation_mail(email_data)
+                send_confirmation_mail(email_data)
 
-        except requests.exceptions.HTTPError as errh:
-            print("Http Error:", errh.response.text)
-        except requests.exceptions.ConnectionError as errc:
-            print("Error Connecting:", errc.response.text)
-        except requests.exceptions.Timeout as errt:
-            print("Timeout Error:", errt.response.text)
-        except requests.exceptions.RequestException as err:
-            print("OOps: Something Else", err.response.text)
+            except requests.exceptions.HTTPError as errh:
+                print("Http Error:", errh.response.text)
+            except requests.exceptions.ConnectionError as errc:
+                print("Error Connecting:", errc.response.text)
+            except requests.exceptions.Timeout as errt:
+                print("Timeout Error:", errt.response.text)
+            except requests.exceptions.RequestException as err:
+                print("OOps: Something Else", err.response.text)
 
-    else:
-        print("Payment invalid. Inconsistence transaction amount. Abort card purchase.")
+        else:
+            print("Payment invalid. Inconsistence transaction amount. Abort card purchase.")
+            
+    except PromoCodes.DoesNotExist:
+        return Response({"message": "Transaction Doesnot EXIST."}, status=status.HTTP_404_NOT_FOUND)
 
 
 def send_confirmation_mail(data):
 
    # Logic to sent fancy confirmation Email
+   
+    print(data)
 
     pass

@@ -13,7 +13,6 @@ environ.Env.read_env()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# SECRET_KEY = os.getenv('SECRET_KEY')
 SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -83,7 +82,6 @@ db_config['ATOMIC_REQUESTS'] = True
 DATABASES = {
     'default': db_config,
 }
-# postgres: // eewtxpctrvxivo: 6c8dcf5cc233b1396422b83c07c858277b1628debfaad99edc9e7ff328854c01@ec2-3-213-66-35.compute-1.amazonaws.com: 5432/d1rudq879bu7rc
 # DATABASES = {
 #     'default': {
 #         'ENGINE': 'django.db.backends.postgresql_psycopg2',
