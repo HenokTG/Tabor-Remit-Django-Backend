@@ -2,6 +2,7 @@ import os
 import environ
 from pathlib import Path
 
+import dj_database_url
 import django_heroku
 
 # Initialise environment variables
@@ -75,17 +76,24 @@ WSGI_APPLICATION = 'remit_src.wsgi.application'
 
 
 # Database
-# postgres: // eewtxpctrvxivo: 6c8dcf5cc233b1396422b83c07c858277b1628debfaad99edc9e7ff328854c01@ec2-3-213-66-35.compute-1.amazonaws.com: 5432/d1rudq879bu7rc
+
+db_config = dj_database_url.config(
+    default=env('DATABASE_URL'))
+db_config['ATOMIC_REQUESTS'] = True
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': env('DATABASE_NAME'),
-        'USER': env('DATABASE_USER'),
-        'PASSWORD': env('DATABASE_PASS'),
-        'HOST': env('DATABASE_HOST'),
-        'PORT': env('DATABASE_PORT'),
-    }
+    'default': db_config,
 }
+# postgres: // eewtxpctrvxivo: 6c8dcf5cc233b1396422b83c07c858277b1628debfaad99edc9e7ff328854c01@ec2-3-213-66-35.compute-1.amazonaws.com: 5432/d1rudq879bu7rc
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': env('DATABASE_NAME'),
+#         'USER': env('DATABASE_USER'),
+#         'PASSWORD': env('DATABASE_PASS'),
+#         'HOST': env('DATABASE_HOST'),
+#         'PORT': env('DATABASE_PORT'),
+#     }
+# }
 
 
 # Password validation
