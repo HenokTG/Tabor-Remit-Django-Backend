@@ -59,7 +59,7 @@ class PaymentMethod(models.Model):
     provider_name = models.CharField(max_length=50, null=True, blank=True)
     provider_order = models.IntegerField(null=True, blank=True)
     provider_image_link = models.CharField(
-        max_length=50, null=True, blank=True)
+        max_length=1000, null=True, blank=True)
     provider_active = models.BooleanField(null=True, blank=True)
 
     def __str__(self):

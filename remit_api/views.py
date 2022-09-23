@@ -118,6 +118,13 @@ class OperatorLIstView(ListAPIView):
     serializer_class = OperatorSerializer
 
 
+class PromoCodeAdminViewSet(ModelViewSet):
+
+    queryset = PromoCodes.objects.all()
+    serializer_class = PromoCodeSerializer
+    permission_classes = [IsAdminUser]
+
+
 class PromoCodeRetrieveView(RetrieveAPIView):
 
     queryset = PromoCodes.objects.all()

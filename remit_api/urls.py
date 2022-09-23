@@ -6,6 +6,8 @@ from .views import *
 
 router = DefaultRouter()
 router.register(r'admin/packages', PackagesViewSet, basename='Packages_Admin')
+router.register(r'admin/promo-codes', PromoCodeAdminViewSet,
+                basename='Promocodes_Admin')
 router.register(r'admin/operators', OperatorAdminViewSet,
                 basename='Operators_Admin')
 router.register(r'admin/transactions', TransactionsAdminViewset,
