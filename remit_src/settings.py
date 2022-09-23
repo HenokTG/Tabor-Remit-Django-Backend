@@ -19,9 +19,9 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG')
 
 # NGROK is used exposes local server port [8000] to the Internet to recieve paypal webhook response
-ALLOWED_HOSTS = ["f2e4-196-191-60-93.eu.ngrok.io", "127.0.0.1"]
+ALLOWED_HOSTS = ["tabor-remit-backend.herokuapp.com", "127.0.0.1"]
 CSRF_TRUSTED_ORIGINS = [
-    "https://f2e4-196-191-60-93.eu.ngrok.io", "http://localhost:3000"]
+    "https://tabor-remit-backend.herokuapp.com", "http://localhost:3000"]
 
 CORS_ORIGIN_ALLOW_ALL = True
 
@@ -75,6 +75,7 @@ WSGI_APPLICATION = 'remit_src.wsgi.application'
 
 
 # Database
+# postgres: // eewtxpctrvxivo: 6c8dcf5cc233b1396422b83c07c858277b1628debfaad99edc9e7ff328854c01@ec2-3-213-66-35.compute-1.amazonaws.com: 5432/d1rudq879bu7rc
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
