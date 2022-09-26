@@ -139,7 +139,7 @@ def create_transaction(sender, instance, created, *args, **kwargs):
                                     airtime_amount=remit_value,
                                     invoice=instance,
                                     transaction_status="commited",
-                                    transaction_amount=Paid_Amount)
+                                    transaction_amount=round(Paid_Amount, 2))
 
 
 @receiver(post_save, sender=Invoces)

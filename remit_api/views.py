@@ -73,9 +73,8 @@ class InvoicesCreateView(CreateAPIView):
 
         Check_Amount = package.selling_price_USD * (1 - package.discount_rate) * \
             (1-operator.operator_discount_rate) * (1-promo_disc)
-       
-        if Check_Amount == total:
 
+        if round(Check_Amount, 2) == round(float(total), 2):
             new_invoice = Invoces.objects.create(
                 invoive_id=order_id,
                 receiver_phone=phone,
@@ -176,7 +175,7 @@ class RemitProcessWebhookView(View):
         if event_type == CHECKOUT_ORDER_APPROVED:
 
             # print(json.dumps(event_detail, indent=4))
-            process_card_purchase(event_detail, event_type)
+            process_card_purchase(event_detail)
 
         return HttpResponse()
 
@@ -187,19 +186,19 @@ def process_card_purchase(event_detail):
     order_amount = event_detail["purchase_units"][0]["amount"]["value"]
     customer_name = event_detail["payer"]["name"]["given_name"]
     customer_email = event_detail["payer"]["email_address"]
-    
+
     try:
         Transaction_detail = Transactions.objects.get(
-            transaction_id=order_id)    
+            transaction_id=order_id)
 
-        if Transaction_detail.transaction_amount == float(order_amount):
+        if round(Transaction_detail.transaction_amount, 2) == round(float(order_amount), 2):
             print("Payment Verified. Continue card purchase.")
-            
+
             invoice_id = Transaction_detail.transaction_id
             phone_number = Transaction_detail.invoice.receiver_phone
             airtime_amount = Transaction_detail.airtime_amount
             service_provider = Transaction_detail.invoice.operator.operator_name
-            
+
             Transaction_detail.transaction_status = "APPROVED"
             Transaction_detail.save(update_fields=['transaction_status'])
 
@@ -213,12 +212,12 @@ def process_card_purchase(event_detail):
                 response.raise_for_status()
 
                 email_data = {"subject":  "[From Tabor Remit] Card Purchase processed Sucessfully.",
-                            "message": f"Hi, {customer_name}. Thank you for sending love to Ethiopia. Your card purchase \
+                              "message": f"Hi, {customer_name}. Thank you for sending love to Ethiopia. Your card purchase \
                                     order of {airtime_amount} ETB to {service_provider} \
                                     customer number +251{phone_number} is completed successfully.\
                                         your invoice id is {invoice_id}",
-                            "from_email": "our@email.com",
-                            "recipient": customer_email}
+                              "from_email": "our@email.com",
+                              "recipient": customer_email}
 
                 send_confirmation_mail(email_data)
 
@@ -232,8 +231,9 @@ def process_card_purchase(event_detail):
                 print("OOps: Something Else", err.response.text)
 
         else:
-            print("Payment invalid. Inconsistence transaction amount. Abort card purchase.")
-            
+            print(
+                "Payment invalid. Inconsistence transaction amount. Abort card purchase.")
+
     except Transactions.DoesNotExist:
         return Response({"message": "Transaction Doesnot EXIST."}, status=status.HTTP_404_NOT_FOUND)
 
@@ -241,7 +241,7 @@ def process_card_purchase(event_detail):
 def send_confirmation_mail(data):
 
    # Logic to sent fancy confirmation Email
-   
+
     print(data)
 
     pass

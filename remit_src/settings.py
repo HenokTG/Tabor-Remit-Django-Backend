@@ -19,26 +19,37 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = env.bool("DJANGO_DEBUG", False)
 
 # NGROK is used exposes local server port [8000] to the Internet to recieve paypal webhook response
-ALLOWED_HOSTS = ["tabor-remit-backend.herokuapp.com", "127.0.0.1"]
+ALLOWED_HOSTS = ["tabor-remit-backend.herokuapp.com",
+                 "f2d9-197-156-103-213.eu.ngrok.io", "127.0.0.1"]
 CSRF_TRUSTED_ORIGINS = [
-    "https://tabor-remit-backend.herokuapp.com", "http://localhost:3000"]
+    "https://tabor-remit-backend.herokuapp.com", "http://localhost:3000", "https://f2d9-197-156-103-213.eu.ngrok.io"]
 
 CORS_ORIGIN_ALLOW_ALL = True
 
 # Application definition
+# ------------------------------------------------------------------------------
+# https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 
-INSTALLED_APPS = [
+DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+]
+THIRD_PARTY_APPS = [
     'corsheaders',
-    'agent_api',
-    'remit_api',
     'rest_framework',
 ]
+
+LOCAL_APPS = [
+    'agent_api',
+    'remit_api',
+]
+
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
