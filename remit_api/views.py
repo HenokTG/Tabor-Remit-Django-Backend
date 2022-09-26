@@ -199,9 +199,6 @@ def process_card_purchase(event_detail):
             airtime_amount = Transaction_detail.airtime_amount
             service_provider = Transaction_detail.invoice.operator.operator_name
 
-            Transaction_detail.transaction_status = "APPROVED"
-            Transaction_detail.save(update_fields=['transaction_status'])
-
             data = {'phone': phone_number,
                     'value': airtime_amount,
                     }  # This may not be the actual key-value pair
@@ -210,6 +207,9 @@ def process_card_purchase(event_detail):
             try:
                 response = requests.post(url=API_ENDPOINT, data=data)
                 response.raise_for_status()
+                
+                Transaction_detail.transaction_status = "APPROVED"
+                Transaction_detail.save(update_fields=['transaction_status'])
 
                 email_data = {"subject":  "[From Tabor Remit] Card Purchase processed Sucessfully.",
                               "message": f"Hi, {customer_name}. Thank you for sending love to Ethiopia. Your card purchase \
