@@ -16,7 +16,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = env('DEBUG')
+DEBUG = env.bool("DJANGO_DEBUG", False)
 
 # NGROK is used exposes local server port [8000] to the Internet to recieve paypal webhook response
 ALLOWED_HOSTS = ["tabor-remit-backend.herokuapp.com", "127.0.0.1"]
@@ -79,6 +79,7 @@ WSGI_APPLICATION = 'remit_src.wsgi.application'
 db_config = dj_database_url.config(
     default=env('DATABASE_URL'))
 db_config['ATOMIC_REQUESTS'] = True
+
 DATABASES = {
     'default': db_config,
 }

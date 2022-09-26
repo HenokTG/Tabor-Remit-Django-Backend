@@ -195,6 +195,7 @@ def process_card_purchase(event_detail):
         if Transaction_detail.transaction_amount == float(order_amount):
             print("Payment Verified. Continue card purchase.")
             
+            invoice_id = Transaction_detail.transaction_id
             phone_number = Transaction_detail.invoice.receiver_phone
             airtime_amount = Transaction_detail.airtime_amount
             service_provider = Transaction_detail.invoice.operator.operator_name
@@ -214,7 +215,8 @@ def process_card_purchase(event_detail):
                 email_data = {"subject":  "[From Tabor Remit] Card Purchase processed Sucessfully.",
                             "message": f"Hi, {customer_name}. Thank you for sending love to Ethiopia. Your card purchase \
                                     order of {airtime_amount} ETB to {service_provider} \
-                                    customer number +251{phone_number} is completed successfully.",
+                                    customer number +251{phone_number} is completed successfully.\
+                                        your invoice id is {invoice_id}",
                             "from_email": "our@email.com",
                             "recipient": customer_email}
 
@@ -232,7 +234,7 @@ def process_card_purchase(event_detail):
         else:
             print("Payment invalid. Inconsistence transaction amount. Abort card purchase.")
             
-    except PromoCodes.DoesNotExist:
+    except Transactions.DoesNotExist:
         return Response({"message": "Transaction Doesnot EXIST."}, status=status.HTTP_404_NOT_FOUND)
 
 
