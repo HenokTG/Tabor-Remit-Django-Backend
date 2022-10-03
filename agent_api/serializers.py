@@ -24,6 +24,7 @@ class CustomAgentSerializer(ModelSerializer):
         fields = ('agent_name',
                   'email',
                   "phone",
+                  "commission",
                   'password',
                   'Confirm_Password')
         extra_kwargs = {'Confirm_Password': {'write_only': True}}
