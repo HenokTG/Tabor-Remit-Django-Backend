@@ -50,7 +50,7 @@ class AgentProfile(AbstractBaseUser, PermissionsMixin):
     last_name = models.CharField(max_length=50, null=True, blank=True)
     image = models.ImageField(null=True, blank=True,
                               upload_to=model_helpers.upload_to)
-    
+
     business_name = models.CharField(max_length=150, null=True, blank=True)
     commission = models.FloatField(max_length=10, null=True, blank=True)
     description = models.TextField(null=True, blank=True)
@@ -59,7 +59,7 @@ class AgentProfile(AbstractBaseUser, PermissionsMixin):
     zone = models.CharField(max_length=100, null=True, blank=True)
     woreda = models.CharField(max_length=100, null=True, blank=True)
     street = models.CharField(max_length=100, null=True, blank=True)
-    
+
     date_joined = models.DateTimeField(default=timezone.now)
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=False)
@@ -75,7 +75,7 @@ class AgentProfile(AbstractBaseUser, PermissionsMixin):
 
     def save(self,  *args, **kwargs):
         super(AgentProfile, self).save(*args, **kwargs)
-        
+
         try:
             img = Image.open(self.image.path)
 
@@ -86,7 +86,7 @@ class AgentProfile(AbstractBaseUser, PermissionsMixin):
         except:
             pass
 
-        
+
 class PaymentsTracker(models.Model):
 
     payment_time = models.DateTimeField(default=timezone.now)
@@ -96,11 +96,17 @@ class PaymentsTracker(models.Model):
                                   editable=False)
     payment_type = models.CharField(max_length=150, null=True, blank=True)
     payment_bank = models.CharField(max_length=150, null=True, blank=True)
-    transaction_number = models.CharField(max_length=150, null=True, blank=True)
+    transaction_number = models.CharField(
+        max_length=150, null=True, blank=True)
     paid_amount = models.FloatField(null=True, blank=True)
     total_sell = models.FloatField(null=True, blank=True)
     commision = models.FloatField(null=True, blank=True)
     total_payment = models.FloatField(null=True, blank=True)
     remaining_payment = models.FloatField(null=True, blank=True)
-    payment_for = models.ForeignKey(settings.AUTH_USER_MODEL, default=0,
-                              on_delete=models.SET_DEFAULT)
+    payment_for = models.ForeignKey(settings.AUTH_USER_MODEL, 
+                                    default={
+                                                "id": "None", 
+                                                "agent_name": "DEFAULT", 
+                                                "Cause": "Payment Unavailable"
+                                             },
+                                    on_delete=models.SET_DEFAULT)
