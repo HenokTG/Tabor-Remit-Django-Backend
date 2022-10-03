@@ -103,10 +103,10 @@ class PaymentsTracker(models.Model):
     commision = models.FloatField(null=True, blank=True)
     total_payment = models.FloatField(null=True, blank=True)
     remaining_payment = models.FloatField(null=True, blank=True)
-    # payment_for = models.ForeignKey(settings.AUTH_USER_MODEL, 
-    #                                 default={
-    #                                             "id": "None", 
-    #                                             "agent_name": "DEFAULT", 
-    #                                             "Cause": "Payment Unavailable"
-    #                                          },
-    #                                 on_delete=models.SET_DEFAULT)
+    agent_name = models.ForeignKey(settings.AUTH_USER_MODEL, 
+                                    default={
+                                                "id": "None", 
+                                                "agent_name": "DEFAULT", 
+                                                "Cause": "Payment Unavailable"
+                                             },
+                                    on_delete=models.SET_DEFAULT)
