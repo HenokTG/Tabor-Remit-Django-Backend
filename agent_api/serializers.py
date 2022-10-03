@@ -3,7 +3,7 @@ from rest_framework.serializers import ModelSerializer
 from django.contrib.auth.password_validation import validate_password
 from rest_framework.validators import UniqueValidator
 
-from .models import AgentProfile
+from .models import AgentProfile, PaymentsTracker
 
 
 class CustomAgentSerializer(ModelSerializer):
@@ -49,9 +49,16 @@ class CustomAgentSerializer(ModelSerializer):
         return instance
 
 
-class AgentProfileUpdateSerializer(ModelSerializer):
+class AgentProfileSerializer(ModelSerializer):
 
     class Meta:
         model = AgentProfile
         exclude = ('date_joined', 'is_staff', 'is_active', 'is_superuser',
                    'password', 'last_login', 'groups', 'user_permissions')
+        
+class PaymentSerializer(ModelSerializer):
+
+    class Meta:
+        model = PaymentsTracker
+        fields = ('payment_type', 'payment_bank',
+                  'transaction_number', 'paid_amount', 'payment_for')

@@ -6,8 +6,8 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
-from .models import AgentProfile
-from .serializers import AgentProfileUpdateSerializer, CustomAgentSerializer
+from .models import AgentProfile, PaymentsTracker
+from .serializers import AgentProfileSerializer, CustomAgentSerializer, PaymentSerializer
 
 
 class UserRegistrationAPIView(ListCreateAPIView):
@@ -32,7 +32,8 @@ class ProfileViewSet(viewsets.ModelViewSet):
 
     permission_classes = [IsAuthenticated]
     parser_classes = [MultiPartParser, FormParser]
-    serializer_class = AgentProfileUpdateSerializer
+    serializer_class = AgentProfileSerializer
+
 
     def get_object(self, queryset=None, **kwargs):
         user = self.kwargs.get('pk')
@@ -56,3 +57,8 @@ class ProfileViewSet(viewsets.ModelViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class PaymentViewSet(viewsets.ModelViewSet):
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = PaymentSerializer
+    queryset = PaymentsTracker.objects.all()

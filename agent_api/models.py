@@ -1,4 +1,7 @@
+import uuid
+
 from django.db import models
+from django.conf import settings
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
@@ -70,12 +73,34 @@ class AgentProfile(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return f'{self.agent_name} Profile'
 
-    # def save(self,  *args, **kwargs):
-    #     super(AgentProfile, self).save(*args, **kwargs)
+    def save(self,  *args, **kwargs):
+        super(AgentProfile, self).save(*args, **kwargs)
+        
+        try:
+            img = Image.open(self.image.path)
 
-    #     img = Image.open(self.image.path)
+            if img.height > 300 or img.width > 300:
+                output_size = (300, 300)
+                img.thumbnail(output_size)
+                img.save(self.image.path)
+        except:
+            pass
 
-    #     if img.height > 300 or img.width > 300:
-    #         output_size = (300, 300)
-    #         img.thumbnail(output_size)
-    #         img.save(self.image.path)
+        
+class PaymentsTracker(models.Model):
+
+    payment_time = models.DateTimeField(default=timezone.now)
+    payment_id = models.CharField(max_length=150,
+                                  primary_key=True,
+                                  default=uuid.uuid4,
+                                  editable=False)
+    payment_type = models.CharField(null=True, blank=True)
+    payment_bank = models.CharField(null=True, blank=True)
+    transaction_number = models.CharField(null=True, blank=True)
+    paid_amount = models.FloatField(null=True, blank=True)
+    total_sell = models.FloatField(null=True, blank=True)
+    commision = models.FloatField(null=True, blank=True)
+    total_payment = models.FloatField(null=True, blank=True)
+    remaining_payment = models.FloatField(null=True, blank=True)
+    payment_for = models.ForeignKey(settings.AUTH_USER_MODEL, default=0,
+                              on_delete=models.SET_DEFAULT)
