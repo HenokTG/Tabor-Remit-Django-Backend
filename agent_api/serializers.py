@@ -62,4 +62,4 @@ class PaymentSerializer(ModelSerializer):
     class Meta:
         model = PaymentsTracker
         fields = ('payment_type', 'payment_bank',
-                  'transaction_number', 'paid_amount', 'payment_for')
+                  'transaction_number', 'paid_amount')
