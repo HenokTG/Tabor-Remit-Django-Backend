@@ -94,9 +94,9 @@ class PaymentsTracker(models.Model):
                                   primary_key=True,
                                   default=uuid.uuid4,
                                   editable=False)
-    payment_type = models.CharField(null=True, blank=True)
-    payment_bank = models.CharField(null=True, blank=True)
-    transaction_number = models.CharField(null=True, blank=True)
+    payment_type = models.CharField(max_length=150, null=True, blank=True)
+    payment_bank = models.CharField(max_length=150, null=True, blank=True)
+    transaction_number = models.CharField(max_length=150, null=True, blank=True)
     paid_amount = models.FloatField(null=True, blank=True)
     total_sell = models.FloatField(null=True, blank=True)
     commision = models.FloatField(null=True, blank=True)
