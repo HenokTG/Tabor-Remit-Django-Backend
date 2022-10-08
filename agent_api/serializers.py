@@ -24,7 +24,6 @@ class CustomAgentSerializer(ModelSerializer):
         fields = ('agent_name',
                   'email',
                   "phone",
-                  "commission",
                   'password',
                   'Confirm_Password')
         extra_kwargs = {'Confirm_Password': {'write_only': True}}
@@ -42,7 +41,7 @@ class CustomAgentSerializer(ModelSerializer):
         instance = self.Meta.model(
             agent_name=validated_data['agent_name'],
             email=validated_data['email'],
-            Institute=validated_data['phone'])
+            phone=validated_data['phone'])
         if password is not None:
             instance.set_password(password)
         instance.save()

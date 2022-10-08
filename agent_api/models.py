@@ -68,7 +68,7 @@ class AgentProfile(AbstractBaseUser, PermissionsMixin):
     objects = CustomAccountManager()
 
     USERNAME_FIELD = 'agent_name'
-    REQUIRED_FIELDS = ['email', 'commission', 'phone']
+    REQUIRED_FIELDS = ['email', 'phone']
 
     def __str__(self):
         return f'{self.agent_name} Profile'
@@ -103,10 +103,10 @@ class PaymentsTracker(models.Model):
     commision = models.FloatField(null=True, blank=True)
     total_payment = models.FloatField(null=True, blank=True)
     remaining_payment = models.FloatField(null=True, blank=True)
-    agent_name = models.ForeignKey(settings.AUTH_USER_MODEL, 
-                                    default={
-                                                "id": "None", 
-                                                "agent_name": "DEFAULT", 
-                                                "Cause": "Payment Unavailable"
-                                             },
-                                    on_delete=models.SET_DEFAULT)
+    agent_name = models.ForeignKey(settings.AUTH_USER_MODEL,
+                                   default={
+                                       "id": "None",
+                                       "agent_name": "DEFAULT",
+                                       "Cause": "Payment Unavailable"
+                                   },
+                                   on_delete=models.SET_DEFAULT)

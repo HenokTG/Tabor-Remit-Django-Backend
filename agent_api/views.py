@@ -1,14 +1,24 @@
 from django.shortcuts import get_object_or_404
 
 from rest_framework import viewsets, status
+from rest_framework.views import APIView
 from rest_framework.generics import ListCreateAPIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
+from rest_framework_simplejwt.tokens import RefreshToken
+
 from .models import AgentProfile, PaymentsTracker
 from .serializers import AgentProfileSerializer, CustomAgentSerializer, PaymentSerializer
 
+
+class PaymentViewSet(viewsets.ModelViewSet):
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = PaymentSerializer
+    queryset = PaymentsTracker.objects.all()
+    
 
 class UserRegistrationAPIView(ListCreateAPIView):
 
@@ -57,8 +67,17 @@ class ProfileViewSet(viewsets.ModelViewSet):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class PaymentViewSet(viewsets.ModelViewSet):
+class BlacklistTokenUpdateView(APIView):
+    permission_classes = [AllowAny]
 
-    permission_classes = [IsAuthenticated]
-    serializer_class = PaymentSerializer
-    queryset = PaymentsTracker.objects.all()
+    def post(self, request):
+        print(request.data)
+        try:
+            refresh_token = request.data["refresh_token"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception as e:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+
