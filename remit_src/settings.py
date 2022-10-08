@@ -43,6 +43,8 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     'corsheaders',
     'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
 ]
 
 LOCAL_APPS = [
@@ -158,7 +160,10 @@ AUTH_USER_MODEL = "agent_api.AgentProfile"
 REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.AllowAny',
-    ]
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
 }
 
 # PayPal Settings ...REMEMBER TO HIDE THIS IN ENVIRONMENT VARIEABLE WHEN DEPLOY OR COMMIT
