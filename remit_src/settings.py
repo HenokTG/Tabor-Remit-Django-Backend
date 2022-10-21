@@ -92,23 +92,23 @@ WSGI_APPLICATION = 'remit_src.wsgi.application'
 
 # Database
 
-# db_config = dj_database_url.config(
-#     default=env('DATABASE_URL'))
-# db_config['ATOMIC_REQUESTS'] = True
+db_config = dj_database_url.config(
+    default=env('DATABASE_URL'))
+db_config['ATOMIC_REQUESTS'] = True
 
-# DATABASES = {
-#     'default': db_config,
-# }
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': env('DATABASE_NAME'),
-        'USER': env('DATABASE_USER'),
-        'PASSWORD': env('DATABASE_PASS'),
-        'HOST': env('DATABASE_HOST'),
-        'PORT': env('DATABASE_PORT'),
-    }
+    'default': db_config,
 }
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': env('DATABASE_NAME'),
+#         'USER': env('DATABASE_USER'),
+#         'PASSWORD': env('DATABASE_PASS'),
+#         'HOST': env('DATABASE_HOST'),
+#         'PORT': env('DATABASE_PORT'),
+#     }
+# }
 
 
 # Password validation
