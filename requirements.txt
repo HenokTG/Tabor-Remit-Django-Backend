@@ -6,7 +6,6 @@ django_heroku==0.3.1
 django_model_helpers==2.0
 djangorestframework==3.14.0
 environ==1.0
-model_helpers==0.3
 paypalrestsdk==1.13.1
 Pillow==9.2.0
 requests==2.27.1
