@@ -22,9 +22,9 @@ DEBUG = env.bool("DJANGO_DEBUG", False)
 
 # NGROK is used exposes local server port [8000] to the Internet to recieve paypal webhook response
 ALLOWED_HOSTS = ["tabor-remit-backend.herokuapp.com",
-                 "f2d9-197-156-103-213.eu.ngrok.io", "127.0.0.1"]
+                 "1cca-196-188-54-235.eu.ngrok.io", "127.0.0.1"]
 CSRF_TRUSTED_ORIGINS = [
-    "https://tabor-remit-backend.herokuapp.com", "http://localhost:3000", "https://f2d9-197-156-103-213.eu.ngrok.io"]
+    "https://tabor-remit-backend.herokuapp.com", "http://localhost:3000", "https://1cca-196-188-54-235.eu.ngrok.io"]
 
 CORS_ORIGIN_ALLOW_ALL = True
 
@@ -42,6 +42,7 @@ DJANGO_APPS = [
 ]
 THIRD_PARTY_APPS = [
     'corsheaders',
+    'django_filters',
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
@@ -91,23 +92,23 @@ WSGI_APPLICATION = 'remit_src.wsgi.application'
 
 # Database
 
-db_config = dj_database_url.config(
-    default=env('DATABASE_URL'))
-db_config['ATOMIC_REQUESTS'] = True
+# db_config = dj_database_url.config(
+#     default=env('DATABASE_URL'))
+# db_config['ATOMIC_REQUESTS'] = True
 
-DATABASES = {
-    'default': db_config,
-}
 # DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': env('DATABASE_NAME'),
-#         'USER': env('DATABASE_USER'),
-#         'PASSWORD': env('DATABASE_PASS'),
-#         'HOST': env('DATABASE_HOST'),
-#         'PORT': env('DATABASE_PORT'),
-#     }
+#     'default': db_config,
 # }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': env('DATABASE_NAME'),
+        'USER': env('DATABASE_USER'),
+        'PASSWORD': env('DATABASE_PASS'),
+        'HOST': env('DATABASE_HOST'),
+        'PORT': env('DATABASE_PORT'),
+    }
+}
 
 
 # Password validation
@@ -163,6 +164,9 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+    'DEFAULT_FILTER_BACKENDS': (
+        'django_filters.rest_framework.DjangoFilterBackend',
     ),
 }
 

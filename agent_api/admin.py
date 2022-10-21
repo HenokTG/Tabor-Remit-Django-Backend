@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import AgentProfile, PaymentsTracker
+from .models import (AgentProfile, PaymentsTracker,
+                     NewsUpdate, Notifications, ForexRate)
 
 from django.utils.translation import gettext_lazy as _
 
@@ -14,7 +15,7 @@ class UserAdminConfig(UserAdmin):
                    'phone', 'commission', 'is_active', 'is_staff')
     ordering = ('-date_joined',)
     list_display = ('agent_name', 'email', 'commission', 'first_name', 'last_name',
-                    'business_name', 'phone', 'image',)
+                    'business_name', 'phone', 'is_active', 'image',)
 
     fieldsets = (
         (None, {"fields": ("agent_name", "password")}),
@@ -50,3 +51,6 @@ class UserAdminConfig(UserAdmin):
 
 admin.site.register(AgentProfile, UserAdminConfig)
 admin.site.register(PaymentsTracker)
+admin.site.register(NewsUpdate)
+admin.site.register(Notifications)
+admin.site.register(ForexRate)

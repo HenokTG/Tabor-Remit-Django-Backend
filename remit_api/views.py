@@ -1,16 +1,18 @@
 import json
 import requests
-
+from datetime import datetime
 
 from django.conf import settings
-from django.http import HttpResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest, Http404
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import View
+from django.shortcuts import get_object_or_404
+
 
 from rest_framework import status
 from rest_framework.response import Response
-from rest_framework.permissions import IsAdminUser
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.generics import CreateAPIView, ListAPIView, RetrieveAPIView
 
@@ -18,9 +20,10 @@ from paypalrestsdk import notifications
 
 from .models import (Transactions, Invoces, PackageOffers,
                      PromoCodes, Operators, PaymentMethod)
-from agent_api.models import AgentProfile
+from agent_api.models import AgentProfile, ForexRate
 from .serializers import (TransactionSerializer, InvoiceSerializer, PackageSerializer,
                           OperatorSerializer, PromoCodeSerializer)
+from .filter import FilterTransactions
 
 
 class TransactionsAdminViewset(ModelViewSet):
@@ -28,19 +31,25 @@ class TransactionsAdminViewset(ModelViewSet):
     queryset = Transactions.objects.all()
     serializer_class = TransactionSerializer
     permission_classes = [IsAdminUser]
+    filterset_class = FilterTransactions
 
 
 class TransactionsListView(ListAPIView):
 
-    queryset = Transactions.objects.all()
+    permission_classes = [IsAuthenticated]
     serializer_class = TransactionSerializer
 
+    def get_queryset(self):
 
-class InvoicesAdminViewset(ModelViewSet):
+        name = self.kwargs.get('caller')
 
-    queryset = Invoces.objects.all()
-    serializer_class = InvoiceSerializer
-    permission_classes = [IsAdminUser]
+        cardPurcahase = Transactions.objects.filter(
+            agent_name=name)
+
+        if not cardPurcahase:
+            raise Http404(f'No card purchase for agent named "{name}".')
+
+        return cardPurcahase
 
 
 class InvoicesCreateView(CreateAPIView):
@@ -98,6 +107,54 @@ class PackagesViewSet(ModelViewSet):
     serializer_class = PackageSerializer
     permission_classes = [IsAdminUser]
 
+    def get_package_detail(intial_data):
+
+        exc_rate = ForexRate.objects.get(id=1)
+        USD_Amount = float(
+            intial_data["selling_price_ETB"]) / float(exc_rate.forex_rate)
+
+        package_detail = {"package_order": intial_data["package_order"],
+                          "airtime_value": intial_data["airtime_value"],
+                          "selling_price_ETB": intial_data["selling_price_ETB"],
+                          "discount_rate": intial_data["discount_rate"],
+                          "forex_rate": exc_rate.forex_rate,
+                          "selling_price_USD": round(USD_Amount, 2),
+                          }
+
+        return package_detail
+
+    def create(self, request, *args, **kwargs):
+
+        serializer = self.get_serializer(
+            data=self.get_package_detail(request.data))
+        if serializer.is_valid(raise_exception=True):
+            pacakge = serializer.save()
+            if pacakge:
+                return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+
+    def list(self, request):
+        serializer = self.get_serializer(self.get_queryset(), many=True)
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+
+    def update(self, request, format=None, *args, **kwargs):
+
+        instance = self.get_object()
+
+        serializer = self.serializer_class(instance, data=self.get_package_detail(request.data), context={
+                                           'request': request}, partial=True)
+
+        if serializer.is_valid(raise_exception=True):
+            pacakge = serializer.save()
+            if pacakge:
+                return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return Response(data=f'The {instance.airtime_value} birr package is deleted!')
+
 
 class PackageLIstView(ListAPIView):
 
@@ -124,6 +181,40 @@ class PromoCodeAdminViewSet(ModelViewSet):
     serializer_class = PromoCodeSerializer
     permission_classes = [IsAdminUser]
 
+    def get_object(self, queryset=None, *args, **kwargs):
+        code = self.kwargs.get('pk')
+        return get_object_or_404(PromoCodes, promo_code=code)
+
+    def create(self, request, *args, **kwargs):
+
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid(raise_exception=True):
+            pacakge = serializer.save()
+            if pacakge:
+                return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+
+    def list(self, request):
+        serializer = self.get_serializer(self.get_queryset(), many=True)
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+
+    def update(self, request, format=None, *args, **kwargs):
+
+        instance = self.get_object()
+        serializer = self.serializer_class(instance, request.data, context={
+                                           'request': request}, partial=True)
+
+        if serializer.is_valid(raise_exception=True):
+            pacakge = serializer.save()
+            if pacakge:
+                return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.delete()
+        return Response(data=f'Promotion code {instance.promo_code} is deleted!')
+
 
 class PromoCodeRetrieveView(RetrieveAPIView):
 
@@ -132,8 +223,8 @@ class PromoCodeRetrieveView(RetrieveAPIView):
     def get(self, request, **kwargs):
         code = kwargs.get('promo_code')
         try:
-            promocode = PromoCodeSerializer(PromoCodes.objects.get(
-                promo_code=code))
+            promocode = PromoCodeSerializer(PromoCodes.objects.filter(
+                promo_code=code, promo_expiry_date__gte=datetime.now()))
             return Response(promocode.data)
         except PromoCodes.DoesNotExist:
             return Response({"message": "Submited promocode is invalid."}, status=status.HTTP_404_NOT_FOUND)
@@ -192,7 +283,7 @@ def process_card_purchase(event_detail):
         Transaction_detail = Transactions.objects.get(
             transaction_id=order_id)
 
-        if round(Transaction_detail.transaction_amount, 2) == round(float(order_amount), 2):
+        if round(Transaction_detail.transaction_amount_USD, 2) == round(float(order_amount), 2):
             print("Payment Verified. Continue card purchase.")
 
             invoice_id = Transaction_detail.transaction_id
@@ -208,7 +299,7 @@ def process_card_purchase(event_detail):
             try:
                 response = requests.post(url=API_ENDPOINT, data=data)
                 response.raise_for_status()
-                
+
                 Transaction_detail.transaction_status = "APPROVED"
                 Transaction_detail.save(update_fields=['transaction_status'])
 

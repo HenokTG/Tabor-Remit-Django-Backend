@@ -12,12 +12,10 @@ router.register(r'admin/operators', OperatorAdminViewSet,
                 basename='Operators_Admin')
 router.register(r'admin/transactions', TransactionsAdminViewset,
                 basename='Transactions_Admin')
-router.register(r'admin/invoices', InvoicesAdminViewset,
-                basename='Invoices_Admin')
 urlpatterns = router.urls
 
 urlpatterns += [
-    path('transactions/', TransactionsListView.as_view(),
+    path('transactions/<str:caller>', TransactionsListView.as_view(),
          name='transactions'),
     path('invoices/<str:order_id>', InvoicesCreateView.as_view(),
          name='Invoices'),
