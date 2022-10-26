@@ -107,7 +107,7 @@ class PackagesViewSet(ModelViewSet):
     serializer_class = PackageSerializer
     permission_classes = [IsAdminUser]
 
-    def get_package_detail(intial_data):
+    def get_package_detail(self, intial_data):
 
         exc_rate = ForexRate.objects.get(id=1)
         USD_Amount = float(

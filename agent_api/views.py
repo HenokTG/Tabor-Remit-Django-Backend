@@ -107,14 +107,14 @@ class PaymentViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return PaymentsTracker.objects.all()
 
-    def check_agent(agent):
+    def check_agent(self, agent):
         try:
             agentCheck = AgentProfile.objects.get(agent_name=agent)
             return agentCheck.agent_name
         except AgentProfile.DoesNotExist:
             return f"Invalid Agent Name: {agent}"
 
-    def get_payment_detail(intial_data, name, total_agent, total):
+    def get_payment_detail(self, intial_data, name, total_agent, total):
 
         payment_detail = {"payment_type": intial_data["paymentType"],
                           "payment_bank": intial_data["paymentBank"],
