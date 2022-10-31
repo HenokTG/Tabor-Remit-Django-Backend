@@ -103,19 +103,19 @@ class Invoces(models.Model):
     receiver_phone = models.IntegerField(null=True, blank=True)
     agent = models.ForeignKey(settings.AUTH_USER_MODEL,
                               on_delete=models.SET_DEFAULT,
-                              default=get_default_agent)
+                              default=get_default_agent.id)
     package_offers = models.ForeignKey(
         PackageOffers,  on_delete=models.SET(get_default_package),
-        default=get_default_package)
+        default=get_default_package.id)
     promo_code = models.ForeignKey(
         PromoCodes,  on_delete=models.SET_DEFAULT,
-        default=get_default_promo)
+        default=get_default_promo.id)
     operator = models.ForeignKey(
         Operators,  on_delete=models.SET_DEFAULT,
-        default=get_default_operator)
+        default=get_default_operator.id)
     payment_method = models.ForeignKey(
         PaymentMethod, on_delete=models.SET_DEFAULT,
-        default=get_default_payment)
+        default=get_default_payment.id)
 
     def __str__(self):
 

@@ -110,7 +110,7 @@ class PaymentsTracker(models.Model):
     total_agent_payment = models.FloatField(null=True, blank=True)
     paid_agent = models.ForeignKey(settings.AUTH_USER_MODEL,
                                    on_delete=models.SET_DEFAULT,
-                                   default=get_default_agent
+                                   default=get_default_agent.id
                                    )
 
     class Meta:
