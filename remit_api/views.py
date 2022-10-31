@@ -1,6 +1,6 @@
 import json
 import requests
-from datetime import datetime
+from django.utils import timezone
 
 from django.conf import settings
 from django.http import HttpResponse, HttpResponseBadRequest, Http404
@@ -46,10 +46,18 @@ class TransactionsListView(ListAPIView):
         cardPurcahase = Transactions.objects.filter(
             agent_name=name)
 
-        if not cardPurcahase:
-            raise Http404(f'No card purchase for agent named "{name}".')
-
         return cardPurcahase
+
+    def list(self, request, *args, **kwargs):
+
+        cardPurchases = self.get_queryset()
+        if not cardPurchases:
+            name = kwargs.get('caller')
+            raise Http404(f'No card purchases for agent "{name}".')
+
+        serializer = self.get_serializer(cardPurchases, many=True)
+
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
 
 class InvoicesCreateView(CreateAPIView):
@@ -78,7 +86,7 @@ class InvoicesCreateView(CreateAPIView):
                 promo_code=request.data["promoCode"])
             promo_disc = promo.promo_discount_rate
         except PromoCodes.DoesNotExist:
-            promo = None
+            promo = PromoCodes.objects.get_or_create(id=0)[0]
             promo_disc = 0
 
         Check_Amount = package.selling_price_USD * (1 - package.discount_rate) * \
@@ -222,12 +230,13 @@ class PromoCodeRetrieveView(RetrieveAPIView):
 
     def get(self, request, **kwargs):
         code = kwargs.get('promo_code')
-        try:
-            promocode = PromoCodeSerializer(PromoCodes.objects.filter(
-                promo_code=code, promo_expiry_date__gte=datetime.now()))
-            return Response(promocode.data)
-        except PromoCodes.DoesNotExist:
-            return Response({"message": "Submited promocode is invalid."}, status=status.HTTP_404_NOT_FOUND)
+        promocode = PromoCodes.objects.filter(
+            promo_code=code, promo_expiry_date__gte=timezone.now())
+
+        if promocode:
+            return Response(promocode.values()[0])
+        else:
+            return Response({"message": "Submited promocode is invalid."})
 
 
 @method_decorator(csrf_exempt, name="dispatch")

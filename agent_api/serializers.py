@@ -80,6 +80,16 @@ class PaymentSerializer(ModelSerializer):
     class Meta:
         model = PaymentsTracker
         fields = '__all__'
+        depth = 1
+
+    def create(self, validated_data):
+
+        payment = self.Meta.model(**validated_data)
+        payment.paid_agent = self.initial_data["paid_agent"]
+
+        payment.save()
+
+        return validated_data
 
 
 class NewsSerializer(ModelSerializer):
@@ -94,6 +104,7 @@ class NoticationSerializer(ModelSerializer):
     class Meta:
         model = Notifications
         fields = "__all__"
+        depth = 1
 
 
 class CurrencySerializer(ModelSerializer):
@@ -101,3 +112,4 @@ class CurrencySerializer(ModelSerializer):
     class Meta:
         model = ForexRate
         fields = "__all__"
+        depth = 1

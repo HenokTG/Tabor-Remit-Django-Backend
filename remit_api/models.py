@@ -72,6 +72,27 @@ class PaymentMethod(models.Model):
         verbose_name = "Payment Provider"
 
 
+# Create or retrieve a default model placeholder on delete
+def get_default_agent():
+    return settings.AUTH_USER_MODEL.objects.get_or_create(agent_name="deleted", email="unknown@deleted.com", phone=0)[0]
+
+
+def get_default_package():
+    return PackageOffers.objects.get_or_create(id=0)[0]
+
+
+def get_default_promo():
+    return PromoCodes.objects.get_or_create(id=0)[0]
+
+
+def get_default_operator():
+    return Operators.objects.get_or_create(id=0)[0]
+
+
+def get_default_payment():
+    return PaymentMethod.objects.get_or_create(id=0)[0]
+
+
 class Invoces(models.Model):
 
     invoices_commit = models.DateTimeField(default=timezone.now)
@@ -80,16 +101,21 @@ class Invoces(models.Model):
                                   default=uuid.uuid4,
                                   editable=False)
     receiver_phone = models.IntegerField(null=True, blank=True)
+    agent = models.ForeignKey(settings.AUTH_USER_MODEL,
+                              on_delete=models.SET_DEFAULT,
+                              default=get_default_agent)
     package_offers = models.ForeignKey(
-        PackageOffers,  default=None, on_delete=models.SET_DEFAULT, null=True, blank=True)
-    agent = models.ForeignKey(settings.AUTH_USER_MODEL, default=None,
-                              on_delete=models.SET_DEFAULT, null=True, blank=True)
+        PackageOffers,  on_delete=models.SET(get_default_package),
+        default=get_default_package)
     promo_code = models.ForeignKey(
-        PromoCodes,  default=None, on_delete=models.SET_DEFAULT, null=True, blank=True)
+        PromoCodes,  on_delete=models.SET_DEFAULT,
+        default=get_default_promo)
     operator = models.ForeignKey(
-        Operators,  default=None, on_delete=models.SET_DEFAULT, null=True, blank=True)
+        Operators,  on_delete=models.SET_DEFAULT,
+        default=get_default_operator)
     payment_method = models.ForeignKey(
-        PaymentMethod, default=None, on_delete=models.SET_DEFAULT, null=True, blank=True)
+        PaymentMethod, on_delete=models.SET_DEFAULT,
+        default=get_default_payment)
 
     def __str__(self):
 
@@ -128,7 +154,9 @@ class Transactions(models.Model):
     is_commission_paid = models.BooleanField(default=False)
 
     def __str__(self):
-        return f'Phone: {self.invoice.receiver_phone} - Card: {self.airtime_amount} - Status: {self.transaction_status} - Amount:  {self.transaction_amount_USD}'
+        return f'Phone: {self.invoice.receiver_phone} - Card: {self.airtime_amount} \
+                        - Status: {self.transaction_status} - Amount:  {self.transaction_amount_USD} \
+                            - Agent: {self.agent_name} TNX: {self.transaction_id}'
 
     class Meta:
         verbose_name_plural = "Transactions Records"
@@ -145,7 +173,7 @@ def manage_transaction(sender, instance, created, *args, **kwargs):
     operator_discount = instance.operator.operator_discount_rate
     agent_pay = selling_price_ETB * instance.agent.commission
 
-    if instance.promo_code == None:
+    if instance.promo_code.id == 0:
         promo_disc = 0
     else:
         promo_disc = instance.promo_code.promo_discount_rate

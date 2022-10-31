@@ -2,7 +2,7 @@ from django.urls import path
 
 from rest_framework.routers import DefaultRouter
 
-from .views import (PaymentViewSet, ProfileViewSet, CurrencyViewSet, 
+from .views import (PaymentListCreateView, ProfileViewSet, CurrencyViewSet,
                     PaymentListView, NotificationsCreateView,
                     NotificationsListView,
                     MarkReadSingleNotifications, PublishNewsView,
@@ -12,7 +12,6 @@ from .views import (PaymentViewSet, ProfileViewSet, CurrencyViewSet,
 
 
 router = DefaultRouter()
-router.register(r'admin/payments', PaymentViewSet, basename='payment')
 router.register(r'admin/currency', CurrencyViewSet, basename='profile')
 router.register(r'profiles', ProfileViewSet, basename='profile')
 
@@ -22,6 +21,7 @@ urlpatterns += [
     path('register/', UserRegistrationAPIView.as_view(), name='user_registery'),
     path('dashboard/summary/<str:caller>/<str:task>',
          retrieve_4_Dashboard, name='retrieve_summary'),
+    path('admin/payments/', PaymentListCreateView.as_view(), name='user_registery'),
     path('list-payments/<str:caller>',
          PaymentListView.as_view(), name='list_payment'),
     path('admin/create-news/', PublishNewsView.as_view(), name='create_news'),

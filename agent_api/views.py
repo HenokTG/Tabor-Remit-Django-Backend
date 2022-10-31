@@ -77,136 +77,97 @@ class PaymentListView(ListAPIView):
 
     permission_classes = [IsAuthenticated]
     serializer_class = PaymentSerializer
+    queryset = PaymentsTracker.objects.all()
 
     def get_queryset(self):
 
         name = self.kwargs.get('caller')
+        agent_id = AgentProfile.objects.get(
+            agent_name=name).id
 
-        payment = PaymentsTracker.objects.filter(
-            agent_name=name)
-
-        if not payment:
-            raise Http404(f'No payment for agent named "{name}".')
+        payment = self.queryset.objects.filter(
+            paid_agent=agent_id)
 
         return payment
 
+    def list(self, request, *args, **kwargs):
 
-class PaymentViewSet(viewsets.ModelViewSet):
+        payments = self.get_queryset()
+        if not payments:
+            name = kwargs.get('caller')
+            raise Http404(f'No payment for agent "{name}".')
+
+        serializer = self.get_serializer(payments, many=True)
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
+
+
+class PaymentListCreateView(ListCreateAPIView):
 
     permission_classes = [IsAdminUser]
     serializer_class = PaymentSerializer
-    filterset_class = FilterPayments
-
     queryset = PaymentsTracker.objects.all()
+    filterset_class = FilterPayments
 
     def get_object(self, queryset=None, **kwargs):
         pk = self.kwargs.get('pk')
 
-        return get_object_or_404(PaymentsTracker, id=pk)
+        return get_object_or_404(PaymentsTracker, pk=pk)
 
     def get_queryset(self):
         return PaymentsTracker.objects.all()
 
-    def check_agent(self, agent):
-        try:
-            agentCheck = AgentProfile.objects.get(agent_name=agent)
-            return agentCheck.agent_name
-        except AgentProfile.DoesNotExist:
-            return f"Invalid Agent Name: {agent}"
-
-    def get_payment_detail(self, intial_data, name, total_agent, total):
-
-        payment_detail = {"payment_type": intial_data["paymentType"],
-                          "payment_bank": intial_data["paymentBank"],
-                          "transaction_number": intial_data["txnNumber"],
-                          "paid_amount": round(float(intial_data["paidAmount"]), 2),
-                          "total_payment": round(total, 2),
-                          "total_agent_payment": round(total_agent, 2),
-                          "agent_name": name,
-                          }
-
-        return payment_detail
-
     def create(self, request, format='json'):
 
-        checked_agent_name = self.check_agent(request.data["AgentCode"])
+        card_purchase = Transactions.objects.get(
+            transaction_id=request.data["cardPurchaseID"])
+        paid_amount = card_purchase.payment_owed
+        agent = card_purchase.invoice.agent
 
         # Total Agent Payment
-        try:
-            all_agent_payments = self.queryset.filter(
-                agent_name=request.data["AgentCode"])
+        all_agent_payments = self.queryset.filter(
+            paid_agent=agent.id)
+        if all_agent_payments:
             prev_agent_payment = all_agent_payments.aggregate(
                 Sum('paid_amount'))['paid_amount__sum']
             if prev_agent_payment:
-                total_agent_payment = float(prev_agent_payment) + \
-                    float(request.data["paidAmount"])
+                total_agent_payment = float(
+                    prev_agent_payment) + float(paid_amount)
             else:
-                total_agent_payment = float(request.data["paidAmount"])
-        except PaymentsTracker.DoesNotExist:
-            total_agent_payment = float(request.data["paidAmount"])
+                total_agent_payment = float(paid_amount)
+        else:
+            total_agent_payment = float(paid_amount)
 
         # Total Payment
-        try:
-            prev_payment = self.queryset.aggregate(
-                Sum('paid_amount'))['paid_amount__sum']
-            if prev_payment:
-                total_payment = float(prev_payment) + \
-                    float(request.data["paidAmount"])
-            else:
-                total_payment = float(request.data["paidAmount"])
-        except PaymentsTracker.DoesNotExist:
-            total_payment = float(request.data["paidAmount"])
+        prev_payment = self.queryset.aggregate(
+            Sum('paid_amount'))['paid_amount__sum']
+        if prev_payment:
+            total_payment = float(prev_payment) + float(paid_amount)
+        else:
+            total_payment = float(paid_amount)
 
-        serializer = self.serializer_class(data=self.get_payment_detail(
-            request.data, checked_agent_name, total_agent_payment, total_payment))
+        payment_detail = {"payment_type": request.data["paymentType"],
+                          "payment_bank": request.data["paymentBank"],
+                          "transaction_number": request.data["txnNumber"],
+                          "card_paid_id": request.data["cardPurchaseID"],
+                          "paid_amount": round(float(paid_amount), 2),
+                          "total_payment": round(total_payment, 2),
+                          "total_agent_payment": round(total_agent_payment, 2),
+                          "paid_agent": AgentProfile.objects.get(id=agent.id),
+                          }
+
+        serializer = self.serializer_class(data=payment_detail)
 
         if serializer.is_valid():
             payment = serializer.save()
             if payment:
+                card_purchase.is_commission_paid = True
+                card_purchase.save()
                 json = serializer.data
                 return Response(json, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def update(self, request, format='json', *args, **kwargs):
-
-        checked_agent_name = self.check_agent(request.data["AgentCode"])
-
-        instance = self.get_object()
-
-        if instance.agent_name == checked_agent_name:
-            # Total Agent Payment
-            total_agent_payment = instance.total_agent_payment - \
-                instance.paid_amount+float(request.data["paidAmount"])
-            # Total Service Payment
-            total_payment = instance.total_payment - \
-                instance.paid_amount+float(request.data["paidAmount"])
-
-            serializer = self.serializer_class(instance, data=self.get_payment_detail(
-                request.data, checked_agent_name, total_agent_payment, total_payment), context={
-                'request': request}, partial=True)
-
-            if serializer.is_valid(raise_exception=True):
-                payment = serializer.save()
-                if payment:
-                    return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
-            else:
-                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        else:
-            return Response(data=f'The new agent name, {checked_agent_name} does not match with old agent name {instance.agent_name}.')
-
-    def destroy(self, request, *args, **kwargs):
-        instance = self.get_object()
-        all_payments = self.queryset.filter(
-            id__gte=instance.id)
-        for payment in all_payments:
-            payment.total_payment -= instance.paid_amount
-            payment.total_agent_payment -= instance.paid_amount
-            payment.save()
-        instance.delete()
-        return Response(data=f'Payment amount {instance.paid_amount} birr for {instance.agent_name} is deleted!')
-
-
+    
 def retrieve_4_Dashboard(request, **kwargs):
 
     agent = AgentProfile.objects.get(agent_name=kwargs.get('caller'))
@@ -217,7 +178,7 @@ def retrieve_4_Dashboard(request, **kwargs):
 
     else:
         payment = PaymentsTracker.objects.filter(
-            agent_name=kwargs.get('caller'))
+            paid_agent=agent.id)
         card_purchase = Transactions.objects.filter(
             agent_name=kwargs.get('caller'), transaction_status="APPROVED")
 
@@ -277,6 +238,21 @@ class NotificationsCreateView(CreateAPIView):
     serializer_class = NoticationSerializer
     queryset = Notifications.objects.all()
 
+    def post(self, request, format='json'):
+
+        agent = AgentProfile.objects.get(
+            agent_name=request.data["reciever_agent"])
+        request.data["reciever_agent"] = agent
+
+        serializer = self.serializer_class(data=request.data)
+
+        if serializer.is_valid():
+            notice = serializer.save()
+            if notice:
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class NotificationsListView(ListAPIView):
 
@@ -285,15 +261,22 @@ class NotificationsListView(ListAPIView):
 
     def get_queryset(self):
 
-        name = self.kwargs.get('caller')
+        agent_id = AgentProfile.objects.get(
+            agent_name=self.kwargs.get('caller')).id
 
-        notice = Notifications.objects.filter(
-            reciever_agent=name)
-
-        if not notice:
-            raise Http404(f'No notification for agent named "{name}".')
+        notice = Notifications.objects.filter(reciever_agent=agent_id)
 
         return notice
+
+    def list(self, request, *args, **kwargs):
+
+        notifications = self.get_queryset()
+        if not notifications:
+            name = kwargs.get('caller')
+            raise Http404(f'No notification for agent "{name}".')
+
+        serializer = self.get_serializer(notifications, many=True)
+        return Response(serializer.data, status=status.HTTP_202_ACCEPTED)
 
 
 class MarkReadSingleNotifications(UpdateAPIView):
@@ -317,15 +300,16 @@ class MarkReadSingleNotifications(UpdateAPIView):
 
 def MarkReadAllNotifications(request, **kwargs):
 
-    agent_name = kwargs.get('caller')
+    agent = AgentProfile.objects.get(
+        agent_name=kwargs.get('caller'))
     try:
         all_notice_for_agent = Notifications.objects.filter(
-            reciever_agent=agent_name, is_unread=True)
+            reciever_agent=agent.id, is_unread=True)
         all_notice_for_agent.update(is_unread=False)
 
-        return HttpResponse(f'All notifications for agent named "{agent_name}" marked as READ.', status=status.HTTP_200_OK)
+        return HttpResponse(f'All notifications for agent "{agent.agent_name}" marked as READ.', status=status.HTTP_200_OK)
     except Notifications.DoesNotExist:
-        return HttpResponse(f'No notifications to mark as READ for agent named "{agent_name}".', status=status.HTTP_404_NOT_FOUND)
+        return HttpResponse(f'No notifications to mark as READ for agent "{agent.agent_name}".', status=status.HTTP_404_NOT_FOUND)
 
 
 class CurrencyViewSet(viewsets.ModelViewSet):
@@ -334,12 +318,25 @@ class CurrencyViewSet(viewsets.ModelViewSet):
     serializer_class = CurrencySerializer
     queryset = ForexRate.objects.all()
 
+    def post(self, request, format='json'):
+
+        agent = AgentProfile.objects.get(
+            agent_name=request.data["updated_by"])
+        request.data["updated_by"] = agent
+
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            forex_rate = serializer.save()
+            if forex_rate:
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class BlacklistTokenUpdateView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        print(request.data)
         try:
             refresh_token = request.data["refresh_token"]
             token = RefreshToken(refresh_token)

@@ -50,16 +50,16 @@ class CustomAccountManager(BaseUserManager):
 class AgentProfile(AbstractBaseUser, PermissionsMixin):
 
     agent_name = models.CharField(max_length=50, unique=True)
-    email = models.EmailField(_('email address'), unique=True)
     first_name = models.CharField(max_length=50, null=True, blank=True)
     last_name = models.CharField(max_length=50, null=True, blank=True)
+    email = models.EmailField(_('email address'), unique=True)
     image = models.ImageField(null=True, blank=True,
                               upload_to=model_helpers.upload_to)
 
-    business_name = models.CharField(max_length=150, null=True, blank=True)
-    commission = models.FloatField(max_length=10, null=True, blank=True)
-    description = models.TextField(null=True, blank=True)
     phone = models.BigIntegerField(null=True, blank=True)
+    commission = models.FloatField(max_length=10, null=True, blank=True)
+    business_name = models.CharField(max_length=150, null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
     region = models.CharField(max_length=100, null=True, blank=True)
     zone = models.CharField(max_length=100, null=True, blank=True)
     woreda = models.CharField(max_length=100, null=True, blank=True)
@@ -92,9 +92,15 @@ class AgentProfile(AbstractBaseUser, PermissionsMixin):
             pass
 
 
+# Create or retrieve a default agent placeholder on delete
+def get_default_agent():
+    return AgentProfile.objects.get_or_create(agent_name="deleted", email="unknown@deleted.com", phone=0)[0]
+
+
 class PaymentsTracker(models.Model):
 
     payment_time = models.DateTimeField(default=timezone.now)
+    card_paid_id = models.CharField(max_length=150, null=True, blank=True)
     payment_type = models.CharField(max_length=150, null=True, blank=True)
     payment_bank = models.CharField(max_length=150, null=True, blank=True)
     transaction_number = models.CharField(
@@ -102,10 +108,16 @@ class PaymentsTracker(models.Model):
     paid_amount = models.FloatField(null=True, blank=True)
     total_payment = models.FloatField(null=True, blank=True)
     total_agent_payment = models.FloatField(null=True, blank=True)
-    agent_name = models.CharField(max_length=150, null=True, blank=True)
+    paid_agent = models.ForeignKey(settings.AUTH_USER_MODEL,
+                                   on_delete=models.SET_DEFAULT,
+                                   default=get_default_agent
+                                   )
 
     class Meta:
         ordering = ('-payment_time',)
+        
+    def __str__(self):
+        return f'{self.paid_amount} birr payment for agent {self.paid_agent.agent_name}, the total is {self.total_agent_payment}'
 
 
 class NewsUpdate(models.Model):
@@ -124,16 +136,19 @@ class NewsUpdate(models.Model):
 class Notifications(models.Model):
 
     notification_time = models.DateTimeField(default=timezone.now)
-    reciever_agent = models.CharField(max_length=150, null=True, blank=True)
     task = models.CharField(max_length=144, null=True, blank=True)
     notice = models.TextField(null=True, blank=True)
     is_unread = models.BooleanField(default=True)
+    reciever_agent = models.ForeignKey(settings.AUTH_USER_MODEL,
+                                       on_delete=models.SET_DEFAULT,
+                                       default=get_default_agent
+                                       )
 
     class Meta:
         ordering = ('-notification_time',)
 
     def __str__(self):
-        return f'Notice for {self.reciever_agent} about {self.task}'
+        return f'Notice for {self.reciever_agent.agent_name} about {self.task}'
 
 
 class ForexRate(models.Model):
@@ -142,40 +157,47 @@ class ForexRate(models.Model):
     from_currency = models.CharField(default="USD", max_length=10)
     to_currency = models.CharField(default="ETB", max_length=10)
     forex_rate = models.FloatField(null=True, blank=True)
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL,
+                                   on_delete=models.SET_DEFAULT,
+                                   default=get_default_agent
+                                   )
 
     def __str__(self):
-        return f'Forex rate from {self.from_currency} to {self.to_currency} is {self.forex_rate}, updated on {self.update_on.date()}'
+        return f'{self.id} Forex rate from {self.from_currency} to {self.to_currency} is {self.forex_rate}, updated on {self.update_on.date()}'
 
 
 @receiver(post_save, sender=ForexRate)
 def update_package(sender, instance, **kwargs):
 
     packages = PackageOffers.objects.all()
+
     for pack in packages:
-        pack.forex_rate = instance.forex_rate
-        pack.selling_price_USD = pack.selling_price_ETB/instance.forex_rate
-        pack.save()
+        if pack.selling_price_ETB != None:
+            pack.forex_rate = instance.forex_rate
+
+            pack.selling_price_USD = pack.selling_price_ETB/instance.forex_rate
+            pack.save()
 
 
 @receiver(post_save, sender=AgentProfile)
-def send_user_created_notice(sender, instance, created, *args, **kwargs):
+def send_agent_created_notice(sender, instance, created, *args, **kwargs):
 
     task = "New agent created."
-    content = f'Thank you {instance.agent_name} is created. Please check the profile and activate the agent if not activated.'
+    content = f'Agent named {instance.agent_name} is created. Please check the profile and activate the agent if not activated.'
 
     task_agent = "Congratulation, You are registered to our service as an Agent"
     content_agent = f'Thank you for choosing to work with us. Update you profile to let us \
                                 get to know you better. We look forward to profitable future with you.'
 
-    if created:
+    if created and instance.is_superuser == False:
         super_agents = AgentProfile.objects.filter(is_superuser=True)
         for admin in super_agents:
-            Notifications.objects.create(reciever_agent=admin.agent_name,
+            Notifications.objects.create(reciever_agent=admin,
                                          task=task, notice=content,
                                          )
-        Notifications.objects.create(reciever_agent=instance.agent_name,
-                                     task=task_agent, notice=content_agent,
-                                        )
+        Notifications.objects.create(reciever_agent=instance,
+                                         task=task_agent, notice=content_agent,
+                                         )
 
 
 @receiver(post_save, sender=PaymentsTracker)
@@ -184,7 +206,7 @@ def send_payment_made_notice(sender, instance, created, *args, **kwargs):
     task = "New payment made."
     content = f'You have received reimbursement in amount of {round(instance.paid_amount,2)} birr. Thanks for partnering with us.'
 
-    if created and instance.agent_name != "Invalid Agent Name":
-        Notifications.objects.create(reciever_agent=instance.agent_name,
+    if created and instance.paid_agent.agent_name != "deleted":
+        Notifications.objects.create(reciever_agent=instance.paid_agent,
                                      task=task, notice=content,
                                      )

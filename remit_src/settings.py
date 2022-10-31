@@ -6,7 +6,6 @@ import dj_database_url
 import django_heroku
 from datetime import timedelta
 
-
 # Initialise environment variables
 env = environ.Env()
 environ.Env.read_env()
@@ -21,10 +20,9 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = env.bool("DJANGO_DEBUG", False)
 
 # NGROK is used exposes local server port [8000] to the Internet to recieve paypal webhook response
-ALLOWED_HOSTS = ["tabor-remit-backend.herokuapp.com",
-                 "1cca-196-188-54-235.eu.ngrok.io", "127.0.0.1"]
+ALLOWED_HOSTS = ["hena-remit-backend.herokuapp.com", "127.0.0.1"]
 CSRF_TRUSTED_ORIGINS = [
-    "https://tabor-remit-backend.herokuapp.com", "http://localhost:3000", "https://1cca-196-188-54-235.eu.ngrok.io"]
+    "https://hena-remit-backend.herokuapp.com/", "http://localhost:3000"]
 
 CORS_ORIGIN_ALLOW_ALL = True
 
@@ -54,7 +52,6 @@ LOCAL_APPS = [
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
-
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -110,7 +107,6 @@ DATABASES = {
 #     }
 # }
 
-
 # Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -127,13 +123,11 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
 # Internationalization
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE = 'Africa/Addis_Ababa'
 USE_I18N = True
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
@@ -177,7 +171,7 @@ PAYPAL_WEBHOOK_ID = env("PAYPAL_WEBHOOK_ID")
 
 # JWT Setup
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=10),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
@@ -204,7 +198,7 @@ SIMPLE_JWT = {
     'JTI_CLAIM': 'jti',
 
     'SLIDING_TOKEN_REFRESH_EXP_CLAIM': 'refresh_exp',
-    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=5),
+    'SLIDING_TOKEN_LIFETIME': timedelta(minutes=10),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
 }
 
