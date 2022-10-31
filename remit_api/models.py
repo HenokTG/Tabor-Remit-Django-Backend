@@ -74,23 +74,23 @@ class PaymentMethod(models.Model):
 
 # Create or retrieve a default model placeholder on delete
 def get_default_agent():
-    return settings.AUTH_USER_MODEL.objects.get_or_create(agent_name="deleted", email="unknown@deleted.com", phone=0)[0]
+    return settings.AUTH_USER_MODEL.objects.get_or_create(agent_name="deleted", email="unknown@deleted.com", phone=0)[0].id
 
 
 def get_default_package():
-    return PackageOffers.objects.get_or_create(id=0)[0]
+    return PackageOffers.objects.get_or_create(id=0)[0].id
 
 
 def get_default_promo():
-    return PromoCodes.objects.get_or_create(id=0)[0]
+    return PromoCodes.objects.get_or_create(id=0)[0].id
 
 
 def get_default_operator():
-    return Operators.objects.get_or_create(id=0)[0]
+    return Operators.objects.get_or_create(id=0)[0].id
 
 
 def get_default_payment():
-    return PaymentMethod.objects.get_or_create(id=0)[0]
+    return PaymentMethod.objects.get_or_create(id=0)[0].id
 
 
 class Invoces(models.Model):
@@ -103,19 +103,19 @@ class Invoces(models.Model):
     receiver_phone = models.IntegerField(null=True, blank=True)
     agent = models.ForeignKey(settings.AUTH_USER_MODEL,
                               on_delete=models.SET_DEFAULT,
-                              default=get_default_agent.id)
+                              default=get_default_agent)
     package_offers = models.ForeignKey(
         PackageOffers,  on_delete=models.SET(get_default_package),
-        default=get_default_package.id)
+        default=get_default_package)
     promo_code = models.ForeignKey(
         PromoCodes,  on_delete=models.SET_DEFAULT,
-        default=get_default_promo.id)
+        default=get_default_promo)
     operator = models.ForeignKey(
         Operators,  on_delete=models.SET_DEFAULT,
-        default=get_default_operator.id)
+        default=get_default_operator)
     payment_method = models.ForeignKey(
         PaymentMethod, on_delete=models.SET_DEFAULT,
-        default=get_default_payment.id)
+        default=get_default_payment)
 
     def __str__(self):
 

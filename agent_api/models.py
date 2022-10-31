@@ -94,7 +94,7 @@ class AgentProfile(AbstractBaseUser, PermissionsMixin):
 
 # Create or retrieve a default agent placeholder on delete
 def get_default_agent():
-    return AgentProfile.objects.get_or_create(agent_name="deleted", email="unknown@deleted.com", phone=0)[0]
+    return AgentProfile.objects.get_or_create(agent_name="deleted", email="unknown@deleted.com", phone=0)[0].id
 
 
 class PaymentsTracker(models.Model):
@@ -110,7 +110,7 @@ class PaymentsTracker(models.Model):
     total_agent_payment = models.FloatField(null=True, blank=True)
     paid_agent = models.ForeignKey(settings.AUTH_USER_MODEL,
                                    on_delete=models.SET_DEFAULT,
-                                   default=get_default_agent.id
+                                   default=get_default_agent
                                    )
 
     class Meta:
