@@ -218,8 +218,8 @@ def new_promo_code_notice(sender, instance, created, *args, **kwargs):
 
     title = "New promocode available"
     content = f'We glad to announce new promoter named "{instance.promoter}" with promocode "{instance.promo_code}".\
-                        Our custommers will have a {round(instance.promo_discount_rate*100,2)} % until "{instance.promo_expiry_date}" if they choose to use it. \
-                            Spread the good news. Thank you.'
+                        Our custommers will have a {round(instance.promo_discount_rate*100,2)} % until "{instance.promo_expiry_date}" \
+                            if they choose to use it. Spread the good news. Thank you.'
 
-    if created and instance.paid_agent.agent_name != "deleted":
+    if created and instance.id == 0:
         NewsUpdate.objects.create(news_title=title, news_content=content,)
