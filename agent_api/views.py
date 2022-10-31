@@ -243,6 +243,8 @@ class NotificationsCreateView(CreateAPIView):
         agent = AgentProfile.objects.get(
             agent_name=request.data["reciever_agent"])
         request.data["reciever_agent"] = agent
+        
+        
 
         serializer = self.serializer_class(data=request.data)
 

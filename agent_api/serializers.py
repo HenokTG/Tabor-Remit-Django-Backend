@@ -106,6 +106,15 @@ class NoticationSerializer(ModelSerializer):
         fields = "__all__"
         depth = 1
 
+    def create(self, validated_data):
+
+        notice = self.Meta.model(**validated_data)
+        notice.reciever_agent = self.initial_data["reciever_agent"]
+
+        notice.save()
+
+        return validated_data
+
 
 class CurrencySerializer(ModelSerializer):
 
