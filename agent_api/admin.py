@@ -14,7 +14,7 @@ class UserAdminConfig(UserAdmin):
                    'last_name', 'business_name',
                    'phone', 'commission', 'is_active', 'is_staff')
     ordering = ('-date_joined',)
-    list_display = ('id', 'agent_name', 'email', 'commission', 'first_name', 'last_name',
+    list_display = ('agent_name', 'email', 'commission', 'first_name', 'last_name',
                     'business_name', 'phone', 'is_active', 'image',)
 
     fieldsets = (
