@@ -85,7 +85,7 @@ class PaymentListView(ListAPIView):
         agent_id = AgentProfile.objects.get(
             agent_name=name).id
 
-        payment = self.queryset.objects.filter(
+        payment = PaymentsTracker.objects.filter(
             paid_agent=agent_id)
 
         return payment
