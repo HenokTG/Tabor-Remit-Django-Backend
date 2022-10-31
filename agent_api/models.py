@@ -12,7 +12,7 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseU
 from PIL import Image
 import model_helpers
 
-from remit_api.models import PackageOffers
+from remit_api.models import PackageOffers, PromoCodes
 
 
 class CustomAccountManager(BaseUserManager):
@@ -115,7 +115,7 @@ class PaymentsTracker(models.Model):
 
     class Meta:
         ordering = ('-payment_time',)
-        
+
     def __str__(self):
         return f'{self.paid_amount} birr payment for agent {self.paid_agent.agent_name}, the total is {self.total_agent_payment}'
 
@@ -189,15 +189,15 @@ def send_agent_created_notice(sender, instance, created, *args, **kwargs):
     content_agent = f'Thank you for choosing to work with us. Update you profile to let us \
                                 get to know you better. We look forward to profitable future with you.'
 
-    if created and instance.is_superuser == False:
+    if created and instance.is_superuser == False and instance.agent_name != "deleted":
         super_agents = AgentProfile.objects.filter(is_superuser=True)
         for admin in super_agents:
             Notifications.objects.create(reciever_agent=admin,
                                          task=task, notice=content,
                                          )
         Notifications.objects.create(reciever_agent=instance,
-                                         task=task_agent, notice=content_agent,
-                                         )
+                                     task=task_agent, notice=content_agent,
+                                     )
 
 
 @receiver(post_save, sender=PaymentsTracker)
@@ -209,4 +209,17 @@ def send_payment_made_notice(sender, instance, created, *args, **kwargs):
     if created and instance.paid_agent.agent_name != "deleted":
         Notifications.objects.create(reciever_agent=instance.paid_agent,
                                      task=task, notice=content,
+
                                      )
+
+
+@receiver(post_save, sender=PromoCodes)
+def new_promo_code_notice(sender, instance, created, *args, **kwargs):
+
+    title = "New promocode available"
+    content = f'We glad to announce new promoter named "{instance.promoter}" with promocode "{instance.promo_code}".\
+                        Our custommers will have a {round(instance.promo_discount_rate*100,2)} % until "{instance.promo_expiry_date}" if they choose to use it. \
+                            Spread the good news. Thank you.'
+
+    if created and instance.paid_agent.agent_name != "deleted":
+        NewsUpdate.objects.create(news_title=title, news_content=content,)
