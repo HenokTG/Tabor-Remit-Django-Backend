@@ -216,10 +216,11 @@ def send_payment_made_notice(sender, instance, created, *args, **kwargs):
 @receiver(post_save, sender=PromoCodes)
 def new_promo_code_notice(sender, instance, created, *args, **kwargs):
 
-    title = "New promocode available"
+    title = f'New promocode available: "{instance.promo_code}"'
     content = f'We glad to announce new promoter named "{instance.promoter}" with promocode "{instance.promo_code}".\
-                        Our custommers will have a {round(instance.promo_discount_rate*100,2)} % until "{instance.promo_expiry_date}" \
-                            if they choose to use it. Spread the good news. Thank you.'
+                        Our customers will get a {round(instance.promo_discount_rate*100,2)} % discount on their card purchasse until \
+                            {instance.promo_expiry_date.strftime("%A %B %d, %Y %I:%M %p")} \
+                            if they choose to use this promocode. Spread the good news. Thank you.'
 
-    if created and instance.id == 0:
+    if created and instance.id != 0:
         NewsUpdate.objects.create(news_title=title, news_content=content,)
